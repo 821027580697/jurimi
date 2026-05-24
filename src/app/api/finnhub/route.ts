@@ -14,28 +14,50 @@ export async function GET(req: NextRequest) {
   try {
     let url: string;
 
-    if (type === 'search') {
-      const q = searchParams.get('q');
-      if (!q) return NextResponse.json({ error: '검색어가 필요합니다.' }, { status: 400 });
-      url = `${FINNHUB_BASE}/search?q=${encodeURIComponent(q)}&token=${apiKey}`;
-    } else if (type === 'profile') {
-      const symbol = searchParams.get('symbol');
-      if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
-      url = `${FINNHUB_BASE}/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
-    } else if (type === 'candle') {
-      const symbol = searchParams.get('symbol');
-      if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
-      const resolution = searchParams.get('resolution') || 'D';
-      const to = Math.floor(Date.now() / 1000);
-      const from = to - 365 * 24 * 60 * 60;
-      url = `${FINNHUB_BASE}/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=${resolution}&from=${from}&to=${to}&token=${apiKey}`;
-    } else {
-      const symbol = searchParams.get('symbol');
-      if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
-      url = `${FINNHUB_BASE}/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
+    switch (type) {
+      case 'search': {
+        const q = searchParams.get('q');
+        if (!q) return NextResponse.json({ error: '검색어가 필요합니다.' }, { status: 400 });
+        url = `${FINNHUB_BASE}/search?q=${encodeURIComponent(q)}&token=${apiKey}`;
+        break;
+      }
+      case 'profile': {
+        const symbol = searchParams.get('symbol');
+        if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
+        url = `${FINNHUB_BASE}/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
+        break;
+      }
+      case 'candle': {
+        const symbol = searchParams.get('symbol');
+        if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
+        const resolution = searchParams.get('resolution') || 'D';
+        const to = searchParams.get('to') || String(Math.floor(Date.now() / 1000));
+        const from = searchParams.get('from') || String(Number(to) - 365 * 24 * 60 * 60);
+        url = `${FINNHUB_BASE}/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=${resolution}&from=${from}&to=${to}&token=${apiKey}`;
+        break;
+      }
+      case 'news': {
+        const category = searchParams.get('category') || 'general';
+        url = `${FINNHUB_BASE}/news?category=${encodeURIComponent(category)}&token=${apiKey}`;
+        break;
+      }
+      case 'company-news': {
+        const symbol = searchParams.get('symbol');
+        if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
+        const from = searchParams.get('from') || new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0];
+        const to = searchParams.get('to') || new Date().toISOString().split('T')[0];
+        url = `${FINNHUB_BASE}/company-news?symbol=${encodeURIComponent(symbol)}&from=${from}&to=${to}&token=${apiKey}`;
+        break;
+      }
+      default: {
+        const symbol = searchParams.get('symbol');
+        if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
+        url = `${FINNHUB_BASE}/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
+        break;
+      }
     }
 
-    const res = await fetch(url);
+    const res = await fetch(url, { next: { revalidate: type === 'news' ? 300 : 30 } });
     const data = await res.json();
     return NextResponse.json(data);
   } catch {
