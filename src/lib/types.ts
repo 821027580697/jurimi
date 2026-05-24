@@ -50,5 +50,21 @@ export interface EventItem {
   dday: number;
 }
 
-export type Tab = 'home' | 'market' | 'asset' | 'news' | 'ai';
+export type Tab = 'home' | 'market' | 'asset' | 'news' | 'ai' | 'bookmark';
 export type Currency = 'KRW' | 'USD';
+
+export const SECTOR_LIST: { emoji: string; name: string }[] = [
+  { emoji: '💾', name: '반도체' },
+  { emoji: '🚀', name: '우주/방산' },
+  { emoji: '🤖', name: '로봇' },
+  { emoji: '👓', name: 'AR/XR' },
+  { emoji: '💊', name: '바이오' },
+  { emoji: '🚗', name: '자동차' },
+  { emoji: '⚡', name: '전력/에너지' },
+  { emoji: '🏦', name: '금융' },
+  { emoji: '📱', name: 'IT/플랫폼' },
+  { emoji: '🔋', name: '2차전지' },
+  { emoji: '🏗️', name: '건설/소재' },
+  { emoji: '🎮', name: '엔터/게임' },
+  { emoji: '🛒', name: '유통/소비재' },
+];

@@ -8,6 +8,7 @@ import {
   calculatePortfolioValue,
   calculatePL,
 } from '@/lib/utils';
+import { useBookmarks } from '@/lib/useBookmarks';
 import Header from '@/components/Header';
 import TabBar from '@/components/TabBar';
 import SideMenu from '@/components/SideMenu';
@@ -16,6 +17,7 @@ import StockDetail from '@/components/StockDetail';
 import Portfolio from '@/components/Portfolio';
 import NewsFeed from '@/components/NewsFeed';
 import AIRecommend from '@/components/AIRecommend';
+import Bookmark from '@/components/Bookmark';
 import EventCalendar from '@/components/EventCalendar';
 import PriceTag from '@/components/PriceTag';
 
@@ -24,6 +26,7 @@ export default function Home() {
   const [currency, setCurrency] = useState<Currency>('KRW');
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
+  const { bookmarks, toggle: toggleBookmark, isBookmarked } = useBookmarks();
 
   const allHoldings = [...portfolio.domestic, ...portfolio.overseas, ...portfolio.pension];
   const totalValue = calculatePortfolioValue(allHoldings, currency);
@@ -74,7 +77,13 @@ export default function Home() {
           onToggleMenu={() => setMenuOpen(true)}
           onSelectStock={handleSelectStock}
         />
-        <StockDetail stock={selectedStock} currency={currency} onBack={handleBack} />
+        <StockDetail
+          stock={selectedStock}
+          currency={currency}
+          onBack={handleBack}
+          isBookmarked={isBookmarked(selectedStock.code)}
+          onToggleBookmark={toggleBookmark}
+        />
         <SideMenu
           isOpen={menuOpen}
           onClose={() => setMenuOpen(false)}
@@ -82,6 +91,7 @@ export default function Home() {
             setActiveTab(tab);
             setSelectedStock(null);
           }}
+          bookmarkCount={bookmarks.length}
         />
       </div>
     );
@@ -236,6 +246,15 @@ export default function Home() {
           </div>
         )}
 
+        {activeTab === 'bookmark' && (
+          <Bookmark
+            currency={currency}
+            bookmarks={bookmarks}
+            onToggleBookmark={toggleBookmark}
+            onSelectStock={handleSelectStock}
+          />
+        )}
+
         {activeTab === 'asset' && (
           <div className="pt-3">
             <Portfolio currency={currency} onSelectStock={handleSelectStock} />
@@ -255,7 +274,11 @@ export default function Home() {
         )}
       </main>
 
-      <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabBar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        bookmarkCount={bookmarks.length}
+      />
       <SideMenu
         isOpen={menuOpen}
         onClose={() => setMenuOpen(false)}
@@ -263,6 +286,7 @@ export default function Home() {
           setActiveTab(tab);
           setSelectedStock(null);
         }}
+        bookmarkCount={bookmarks.length}
       />
     </div>
   );

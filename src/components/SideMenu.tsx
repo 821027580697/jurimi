@@ -6,17 +6,19 @@ interface SideMenuProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate: (tab: Tab) => void;
+  bookmarkCount: number;
 }
 
 const menuItems: { icon: string; label: string; tab: Tab }[] = [
   { icon: '🏠', label: '홈', tab: 'home' },
   { icon: '📈', label: '시장 지수', tab: 'market' },
+  { icon: '📌', label: '북마크', tab: 'bookmark' },
   { icon: '💼', label: '내 자산', tab: 'asset' },
   { icon: '📰', label: '뉴스·돈흐름', tab: 'news' },
   { icon: '🤖', label: 'AI 추천', tab: 'ai' },
 ];
 
-export default function SideMenu({ isOpen, onClose, onNavigate }: SideMenuProps) {
+export default function SideMenu({ isOpen, onClose, onNavigate, bookmarkCount }: SideMenuProps) {
   if (!isOpen) return null;
 
   return (
@@ -42,6 +44,11 @@ export default function SideMenu({ isOpen, onClose, onNavigate }: SideMenuProps)
             >
               <span className="text-lg">{item.icon}</span>
               <span className="text-sm font-medium">{item.label}</span>
+              {item.tab === 'bookmark' && bookmarkCount > 0 && (
+                <span className="ml-auto min-w-[20px] h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1.5">
+                  {bookmarkCount}
+                </span>
+              )}
             </button>
           ))}
           <div className="border-t my-2" />

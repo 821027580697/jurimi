@@ -8,9 +8,17 @@ interface StockDetailProps {
   stock: Stock;
   currency: Currency;
   onBack: () => void;
+  isBookmarked: boolean;
+  onToggleBookmark: (code: string) => void;
 }
 
-export default function StockDetail({ stock, currency, onBack }: StockDetailProps) {
+export default function StockDetail({
+  stock,
+  currency,
+  onBack,
+  isBookmarked,
+  onToggleBookmark,
+}: StockDetailProps) {
   const change = formatChange(stock.chg);
   const score = getCheckScore(stock.check);
   const total = 11;
@@ -25,9 +33,21 @@ export default function StockDetail({ stock, currency, onBack }: StockDetailProp
 
   return (
     <div className="pb-20">
-      <button onClick={onBack} className="flex items-center gap-1 px-4 py-3 text-sm text-gray-600">
-        ← 돌아가기
-      </button>
+      <div className="flex items-center justify-between px-4 py-3">
+        <button onClick={onBack} className="text-sm text-gray-600">
+          ← 돌아가기
+        </button>
+        <button
+          onClick={() => onToggleBookmark(stock.code)}
+          className={`text-sm font-bold px-3 py-1.5 rounded-full transition-colors ${
+            isBookmarked
+              ? 'bg-yellow-100 text-yellow-700'
+              : 'bg-gray-100 text-gray-500'
+          }`}
+        >
+          {isBookmarked ? '📌 북마크됨' : '📌 북마크'}
+        </button>
+      </div>
 
       <div className="px-4 mb-4">
         <div className="flex items-start justify-between">
