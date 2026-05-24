@@ -26,7 +26,7 @@ export default function Home() {
   const [currency, setCurrency] = useState<Currency>('KRW');
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
-  const { bookmarks, toggle: toggleBookmark, isBookmarked } = useBookmarks();
+  const { bookmarks, toggle: toggleBookmark, isBookmarked, getBookmarkedStocks } = useBookmarks();
 
   const allHoldings = [...portfolio.domestic, ...portfolio.overseas, ...portfolio.pension];
   const totalValue = calculatePortfolioValue(allHoldings, currency);
@@ -249,7 +249,7 @@ export default function Home() {
         {activeTab === 'bookmark' && (
           <Bookmark
             currency={currency}
-            bookmarks={bookmarks}
+            bookmarkedStocks={getBookmarkedStocks()}
             onToggleBookmark={toggleBookmark}
             onSelectStock={handleSelectStock}
           />

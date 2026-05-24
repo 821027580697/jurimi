@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { Stock } from './types';
+import { stocks as localStocks } from './data';
+import { loadCachedStocks } from './stockCache';
 
 const STORAGE_KEY = 'jurimi-bookmarks';
 
@@ -34,5 +37,17 @@ export function useBookmarks() {
     return bookmarks.includes(code);
   }, [bookmarks]);
 
-  return { bookmarks, toggle, isBookmarked };
+  const getBookmarkedStocks = useCallback((): Stock[] => {
+    const cached = loadCachedStocks();
+    return bookmarks
+      .map(code => {
+        const local = localStocks.find(s => s.code === code);
+        if (local) return local;
+        if (cached[code]) return cached[code];
+        return null;
+      })
+      .filter((s): s is Stock => s !== null);
+  }, [bookmarks]);
+
+  return { bookmarks, toggle, isBookmarked, getBookmarkedStocks };
 }

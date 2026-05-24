@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const FINNHUB_BASE = 'https://finnhub.io/api/v1';
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const symbol = searchParams.get('symbol');
   const type = searchParams.get('type') || 'quote';
   const apiKey = process.env.NEXT_PUBLIC_FINNHUB_KEY;
 
@@ -10,20 +11,28 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Finnhub API 키가 설정되지 않았습니다.' }, { status: 500 });
   }
 
-  if (!symbol) {
-    return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
-  }
-
   try {
     let url: string;
 
-    if (type === 'candle') {
+    if (type === 'search') {
+      const q = searchParams.get('q');
+      if (!q) return NextResponse.json({ error: '검색어가 필요합니다.' }, { status: 400 });
+      url = `${FINNHUB_BASE}/search?q=${encodeURIComponent(q)}&token=${apiKey}`;
+    } else if (type === 'profile') {
+      const symbol = searchParams.get('symbol');
+      if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
+      url = `${FINNHUB_BASE}/stock/profile2?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
+    } else if (type === 'candle') {
+      const symbol = searchParams.get('symbol');
+      if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
       const resolution = searchParams.get('resolution') || 'D';
       const to = Math.floor(Date.now() / 1000);
       const from = to - 365 * 24 * 60 * 60;
-      url = `https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}&token=${apiKey}`;
+      url = `${FINNHUB_BASE}/stock/candle?symbol=${encodeURIComponent(symbol)}&resolution=${resolution}&from=${from}&to=${to}&token=${apiKey}`;
     } else {
-      url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`;
+      const symbol = searchParams.get('symbol');
+      if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
+      url = `${FINNHUB_BASE}/quote?symbol=${encodeURIComponent(symbol)}&token=${apiKey}`;
     }
 
     const res = await fetch(url);
