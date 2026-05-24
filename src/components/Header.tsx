@@ -40,10 +40,13 @@ export default function Header({ currency, onToggleCurrency, onToggleMenu, onSel
       const res = await fetch(`/api/finnhub?type=search&q=${encodeURIComponent(q)}`);
       const data = await res.json();
       if (data.result) {
-        const filtered = (data.result as SearchResult[])
-          .filter(r => r.type === 'Common Stock' || r.type === 'ETP' || r.type === 'ETF' || r.type === 'ADR')
-          .slice(0, 20);
+        const results = data.result as SearchResult[];
+        const filtered = results.length > 0
+          ? results.filter(r => r.symbol && r.description).slice(0, 25)
+          : [];
         setApiResults(filtered);
+      } else if (data.error) {
+        setApiResults([]);
       }
     } catch {
       // ignore

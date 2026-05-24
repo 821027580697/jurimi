@@ -39,6 +39,22 @@ export function toFinnhubSymbol(code: string, usd?: boolean): string {
   return code;
 }
 
+export async function fetchCandlesWithFallback(
+  code: string,
+  usd: boolean,
+  resolution = 'D',
+  days = 365
+): Promise<CandleData | null> {
+  const primary = toFinnhubSymbol(code, usd);
+  const data = await fetchCandles(primary, resolution, days);
+  if (data) return data;
+  if (!usd && /^\d{6}$/.test(code)) {
+    const alt = `${code}.KQ`;
+    return fetchCandles(alt, resolution, days);
+  }
+  return null;
+}
+
 const cache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL = 30_000;
 

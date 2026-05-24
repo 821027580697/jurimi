@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { createChart, IChartApi, ISeriesApi, CandlestickData, HistogramData, LineData, Time, LogicalRange, Logical } from 'lightweight-charts';
-import { fetchCandles, toFinnhubSymbol, CandleData } from '@/lib/api';
+import { fetchCandlesWithFallback, CandleData } from '@/lib/api';
 import { calcRSISeries, calcMACDSeries, calcStochasticSeries } from '@/lib/indicators';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -141,9 +141,8 @@ export default function Chart({ symbol, isKorean, onCandlesLoaded }: ChartProps)
     let cancelled = false;
     async function load() {
       setLoading(true);
-      const finnSym = toFinnhubSymbol(symbol, !isKorean);
       const days = RESOLUTION_DAYS[resolution];
-      const data = await fetchCandles(finnSym, resolution, days);
+      const data = await fetchCandlesWithFallback(symbol, !isKorean, resolution, days);
       if (cancelled) return;
       if (data) {
         setRawCandles(data);
@@ -153,6 +152,7 @@ export default function Chart({ symbol, isKorean, onCandlesLoaded }: ChartProps)
         const fb = generateFallbackCandles(isKorean ? 50000 : 150, days, resolution);
         setRawCandles(fb);
         setIsLive(false);
+        onCandlesLoaded?.(fb);
       }
       setLoading(false);
     }

@@ -39,7 +39,9 @@ export default function Home() {
 
   const fetchLiveData = useCallback(async () => {
     const holdingSymbols = [
+      ...portfolio.domestic.map(h => toFinnhubSymbol(h.code)),
       ...portfolio.overseas.map(h => h.code),
+      ...portfolio.pension.filter(h => /^\d{6}$/.test(h.code)).map(h => toFinnhubSymbol(h.code)),
     ];
     const allSymbols = Array.from(new Set([...holdingSymbols, ...Object.keys(MARKET_SYMBOLS)]));
     const quotes = await fetchQuotes(allSymbols);

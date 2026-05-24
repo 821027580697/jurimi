@@ -64,9 +64,19 @@ export async function GET(req: NextRequest) {
     }
 
     const res = await fetch(url, { next: { revalidate: type === 'news' ? 300 : 30 } });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      return NextResponse.json(
+        { error: `Finnhub API 오류 (${res.status})`, detail: text },
+        { status: res.status }
+      );
+    }
     const data = await res.json();
     return NextResponse.json(data);
-  } catch {
-    return NextResponse.json({ error: '데이터를 가져올 수 없습니다.' }, { status: 500 });
+  } catch (e) {
+    return NextResponse.json(
+      { error: '데이터를 가져올 수 없습니다.', detail: String(e) },
+      { status: 500 }
+    );
   }
 }
