@@ -49,6 +49,12 @@ export async function GET(req: NextRequest) {
         url = `${FINNHUB_BASE}/company-news?symbol=${encodeURIComponent(symbol)}&from=${from}&to=${to}&token=${apiKey}`;
         break;
       }
+      case 'metrics': {
+        const symbol = searchParams.get('symbol');
+        if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });
+        url = `${FINNHUB_BASE}/stock/metric?symbol=${encodeURIComponent(symbol)}&metric=all&token=${apiKey}`;
+        break;
+      }
       default: {
         const symbol = searchParams.get('symbol');
         if (!symbol) return NextResponse.json({ error: '종목 코드가 필요합니다.' }, { status: 400 });

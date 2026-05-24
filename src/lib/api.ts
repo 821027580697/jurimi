@@ -109,3 +109,39 @@ export async function fetchCompanyNews(symbol: string): Promise<FinnhubNewsItem[
   );
   return data || [];
 }
+
+export interface MetricsData {
+  metric: {
+    '10DayAverageTradingVolume'?: number;
+    '52WeekHigh'?: number;
+    '52WeekLow'?: number;
+    beta?: number;
+    currentDividendYieldTTM?: number;
+    epsBasicExclExtraItemsTTM?: number;
+    marketCapitalization?: number;
+    peBasicExclExtraTTM?: number;
+    psTTM?: number;
+    pbAnnual?: number;
+    roeTTM?: number;
+    roaTTM?: number;
+    revenuePerShareTTM?: number;
+    currentRatioQuarterly?: number;
+    debtEquityQuarterly?: number;
+    netProfitMarginTTM?: number;
+    operatingMarginTTM?: number;
+    grossMarginTTM?: number;
+    dividendPerShareAnnual?: number;
+    payoutRatioAnnual?: number;
+    revenueGrowthTTMYoy?: number;
+    epsGrowthTTMYoy?: number;
+  };
+}
+
+export async function fetchMetrics(symbol: string): Promise<MetricsData | null> {
+  const data = await fetchWithCache<MetricsData>(
+    `/api/finnhub?type=metrics&symbol=${encodeURIComponent(symbol)}`,
+    120_000
+  );
+  if (!data || !data.metric) return null;
+  return data;
+}
