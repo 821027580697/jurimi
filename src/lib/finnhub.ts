@@ -1,4 +1,4 @@
-const FINNHUB_KEY = process.env.NEXT_PUBLIC_FINNHUB_KEY || '';
+const FINNHUB_KEY = process.env.FINNHUB_API_KEY || '';
 
 export async function fetchQuote(symbol: string): Promise<{ c: number; dp: number } | null> {
   try {

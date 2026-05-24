@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
   const { message } = await req.json();
-  const token = process.env.NEXT_PUBLIC_TELEGRAM_TOKEN;
-  const chatId = process.env.NEXT_PUBLIC_TELEGRAM_CHAT;
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!token || !chatId) {
     return NextResponse.json({ error: '텔레그램 설정이 없습니다.' }, { status: 500 });

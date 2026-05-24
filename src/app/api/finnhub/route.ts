@@ -5,7 +5,7 @@ const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type') || 'quote';
-  const apiKey = process.env.NEXT_PUBLIC_FINNHUB_KEY;
+  const apiKey = process.env.FINNHUB_API_KEY;
 
   if (!apiKey) {
     return NextResponse.json({ error: 'Finnhub API 키가 설정되지 않았습니다.' }, { status: 500 });
