@@ -99,12 +99,8 @@ export async function fetchKISCandles(
   period = 'D',
   days = 365
 ): Promise<CandleData | null> {
-  const to = new Date();
-  const from = new Date(Date.now() - days * 86400000);
-  const toStr = to.toISOString().split('T')[0].replace(/-/g, '');
-  const fromStr = from.toISOString().split('T')[0].replace(/-/g, '');
   const data = await fetchWithCache<CandleData>(
-    `/api/kis?type=daily&symbol=${code}&from=${fromStr}&to=${toStr}&period=${period}`,
+    `/api/kis?type=daily&symbol=${code}&period=${period}&days=${days}`,
     60_000
   );
   if (!data || data.s !== 'ok' || !data.c?.length) return null;
@@ -201,6 +197,9 @@ export async function fetchSmartCandles(
   if (!usd && isKoreanStock(code)) {
     if (['1', '5', '15', '30'].includes(resolution)) {
       return fetchKISMinuteCandles(code);
+    }
+    if (resolution === '60') {
+      return fetchKISCandles(code, 'D', 30);
     }
     const kisPeriod = resolution === 'W' ? 'W' : resolution === 'M' ? 'M' : 'D';
     const data = await fetchKISCandles(code, kisPeriod, days);
