@@ -34,6 +34,34 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(results);
     }
 
+    // 캔들 차트 데이터 (일봉)
+    if (type === "candle") {
+      const resolution = searchParams.get("resolution") || "D";
+      const days = Number(searchParams.get("days") || "90");
+      const to = Math.floor(Date.now() / 1000);
+      const from = to - days * 86400;
+
+      const res = await fetch(
+        `${BASE}/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}&token=${API_KEY}`
+      );
+      const data = await res.json();
+
+      if (data.s !== "ok" || !data.c?.length) {
+        return NextResponse.json({ candles: [], s: "no_data" });
+      }
+
+      const candles = data.t.map((t: number, i: number) => ({
+        date: new Date(t * 1000).toISOString().split("T")[0],
+        open: data.o[i],
+        high: data.h[i],
+        low: data.l[i],
+        close: data.c[i],
+        volume: data.v[i],
+      }));
+
+      return NextResponse.json({ candles, s: "ok" });
+    }
+
     return NextResponse.json({ error: "Unknown type" }, { status: 400 });
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { searchStocks, StockInfo } from "@/lib/stocks";
 import { formatNumber } from "@/lib/format";
 import PriceTag from "./PriceTag";
+import StockChart from "./StockChart";
 
 interface QuoteResult {
   price: number;
@@ -12,6 +13,7 @@ interface QuoteResult {
   prevClose: number;
   high?: number;
   low?: number;
+  open?: number;
   volume?: number;
   name?: string;
 }
@@ -23,6 +25,7 @@ export default function StockSearch() {
   const [quote, setQuote] = useState<QuoteResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [showChart, setShowChart] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +62,9 @@ export default function StockSearch() {
               change: data.change,
               changePercent: data.changePercent,
               prevClose: data.prevClose,
+              high: data.high,
+              low: data.low,
+              open: data.open,
               volume: data.volume,
               name: data.name,
             });
@@ -76,6 +82,7 @@ export default function StockSearch() {
               prevClose: data.pc,
               high: data.h,
               low: data.l,
+              open: data.o,
             });
           }
         }
@@ -88,6 +95,7 @@ export default function StockSearch() {
     setSelected(stock);
     setQuery(stock.name);
     setFocused(false);
+    setShowChart(true);
     fetchQuote(stock);
   };
 
@@ -96,7 +104,15 @@ export default function StockSearch() {
     setSelected(null);
     setQuote(null);
     setResults([]);
+    setShowChart(false);
     inputRef.current?.focus();
+  };
+
+  const fmtPrice = (v: number) => {
+    if (!selected) return "";
+    return selected.market === "KR"
+      ? `${Math.round(v).toLocaleString("ko-KR")}원`
+      : `$${formatNumber(v, 2)}`;
   };
 
   return (
@@ -111,7 +127,7 @@ export default function StockSearch() {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => { setQuery(e.target.value); setSelected(null); setQuote(null); }}
+            onChange={(e) => { setQuery(e.target.value); setSelected(null); setQuote(null); setShowChart(false); }}
             onFocus={() => setFocused(true)}
             placeholder="종목명 또는 코드 검색 (삼성전자, AAPL...)"
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
@@ -145,9 +161,10 @@ export default function StockSearch() {
         )}
       </div>
 
-      {/* 시세 결과 카드 */}
+      {/* 시세 + 차트 결과 */}
       {selected && (
         <div className="mt-3 bg-white border border-line rounded-2xl p-4 animate-in">
+          {/* 종목 헤더 */}
           <div className="flex items-start justify-between mb-3">
             <div>
               <div className="flex items-center gap-2">
@@ -162,76 +179,82 @@ export default function StockSearch() {
             <button onClick={handleClear} className="text-muted hover:text-black text-lg">✕</button>
           </div>
 
+          {/* 시세 */}
           {loading ? (
-            <div className="py-6 text-center">
+            <div className="py-4 text-center">
               <div className="text-sm text-muted animate-pulse">실시간 시세 조회 중...</div>
             </div>
           ) : quote ? (
             <>
               <div className="flex items-end gap-3 mb-3">
                 <span className="font-mono font-black text-[28px] leading-none">
-                  {selected.market === "KR"
-                    ? `${Math.round(quote.price).toLocaleString("ko-KR")}원`
-                    : `$${formatNumber(quote.price, 2)}`}
+                  {fmtPrice(quote.price)}
                 </span>
                 <PriceTag change={quote.changePercent} size="lg" />
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-card rounded-lg p-2">
-                  <span className="text-muted">전일종가</span>
-                  <div className="font-mono font-bold mt-0.5">
-                    {selected.market === "KR"
-                      ? `${Math.round(quote.prevClose).toLocaleString("ko-KR")}원`
-                      : `$${formatNumber(quote.prevClose, 2)}`}
-                  </div>
+              {/* 시세 상세 그리드 */}
+              <div className="grid grid-cols-3 gap-1.5 text-xs">
+                <div className="bg-card rounded-lg px-2 py-1.5">
+                  <span className="text-muted text-[10px]">전일종가</span>
+                  <div className="font-mono font-bold text-[11px] mt-0.5">{fmtPrice(quote.prevClose)}</div>
                 </div>
-                <div className="bg-card rounded-lg p-2">
-                  <span className="text-muted">등락</span>
-                  <div className="font-mono font-bold mt-0.5" style={{ color: quote.change > 0 ? "#FF2D2D" : quote.change < 0 ? "#2D6CFF" : "#999" }}>
+                <div className="bg-card rounded-lg px-2 py-1.5">
+                  <span className="text-muted text-[10px]">등락</span>
+                  <div
+                    className="font-mono font-bold text-[11px] mt-0.5"
+                    style={{ color: quote.change > 0 ? "#FF2D2D" : quote.change < 0 ? "#2D6CFF" : "#999" }}
+                  >
                     {quote.change > 0 ? "+" : ""}
-                    {selected.market === "KR"
-                      ? `${Math.round(quote.change).toLocaleString("ko-KR")}원`
-                      : `$${formatNumber(quote.change, 2)}`}
+                    {fmtPrice(quote.change)}
                   </div>
                 </div>
-                {quote.high !== undefined && (
-                  <div className="bg-card rounded-lg p-2">
-                    <span className="text-muted">고가</span>
-                    <div className="font-mono font-bold mt-0.5 text-up">
-                      ${formatNumber(quote.high, 2)}
-                    </div>
+                {quote.open !== undefined && quote.open > 0 && (
+                  <div className="bg-card rounded-lg px-2 py-1.5">
+                    <span className="text-muted text-[10px]">시가</span>
+                    <div className="font-mono font-bold text-[11px] mt-0.5">{fmtPrice(quote.open)}</div>
                   </div>
                 )}
-                {quote.low !== undefined && (
-                  <div className="bg-card rounded-lg p-2">
-                    <span className="text-muted">저가</span>
-                    <div className="font-mono font-bold mt-0.5 text-down">
-                      ${formatNumber(quote.low, 2)}
-                    </div>
+                {quote.high !== undefined && quote.high > 0 && (
+                  <div className="bg-card rounded-lg px-2 py-1.5">
+                    <span className="text-muted text-[10px]">고가</span>
+                    <div className="font-mono font-bold text-[11px] mt-0.5 text-up">{fmtPrice(quote.high)}</div>
+                  </div>
+                )}
+                {quote.low !== undefined && quote.low > 0 && (
+                  <div className="bg-card rounded-lg px-2 py-1.5">
+                    <span className="text-muted text-[10px]">저가</span>
+                    <div className="font-mono font-bold text-[11px] mt-0.5 text-down">{fmtPrice(quote.low)}</div>
                   </div>
                 )}
                 {quote.volume !== undefined && quote.volume > 0 && (
-                  <div className="bg-card rounded-lg p-2 col-span-2">
-                    <span className="text-muted">거래량</span>
-                    <div className="font-mono font-bold mt-0.5">
-                      {quote.volume.toLocaleString("ko-KR")}주
-                    </div>
+                  <div className="bg-card rounded-lg px-2 py-1.5">
+                    <span className="text-muted text-[10px]">거래량</span>
+                    <div className="font-mono font-bold text-[11px] mt-0.5">{quote.volume.toLocaleString("ko-KR")}</div>
                   </div>
                 )}
               </div>
 
-              <div className="mt-3 flex items-center justify-center gap-1">
+              <div className="mt-2 flex items-center justify-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-[10px] text-muted">
-                  실시간 · {selected.market === "KR" ? "한국투자증권" : "Finnhub"} API
+                  실시간 · {selected.market === "KR" ? "한국투자증권 KIS" : "Finnhub"} API
                 </span>
               </div>
             </>
           ) : (
-            <div className="py-6 text-center text-sm text-muted">
+            <div className="py-4 text-center text-sm text-muted">
               시세를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.
             </div>
+          )}
+
+          {/* 차트 */}
+          {showChart && (
+            <StockChart
+              code={selected.code}
+              market={selected.market}
+              name={quote?.name || selected.name}
+            />
           )}
         </div>
       )}
