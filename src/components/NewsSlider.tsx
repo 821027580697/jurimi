@@ -223,6 +223,35 @@ export default function NewsSlider({ news, isLive }: Props) {
           />
         ))}
       </div>
+
+      {/* 주목 종목 */}
+      <div className="px-4 mt-4">
+        <div className="text-[13px] font-bold mb-2">🔥 오늘의 주목 종목</div>
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1" style={{ scrollbarWidth: "none" }}>
+          {FEATURED_STOCKS.map((s) => (
+            <div key={s.code} className="shrink-0 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100 w-[130px]">
+              <div className="text-[11px] font-bold truncate">{s.name}</div>
+              <div className="text-[9px] text-muted mb-1">{s.code}</div>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] font-bold" style={{ color: s.reason.includes("급등") || s.reason.includes("상승") ? "#FF2D2D" : s.reason.includes("하락") ? "#2D6CFF" : "#333" }}>
+                  {s.reason}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
+
+const FEATURED_STOCKS = [
+  { name: "삼성전자", code: "005930", reason: "🔴 외인 매수" },
+  { name: "SK하이닉스", code: "000660", reason: "🔴 HBM4 기대" },
+  { name: "한화에어로", code: "012450", reason: "🔴 방산 수출" },
+  { name: "에코프로비엠", code: "247540", reason: "🔵 실적 우려" },
+  { name: "엔비디아", code: "NVDA", reason: "🔴 AI 수요" },
+  { name: "테슬라", code: "TSLA", reason: "⚡ 로보택시" },
+  { name: "로켓랩", code: "RKLB", reason: "🚀 발사 성공" },
+  { name: "팔란티어", code: "PLTR", reason: "🔴 AI 계약" },
+];

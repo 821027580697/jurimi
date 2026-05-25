@@ -30,28 +30,33 @@ export default function StockSearch() {
     }
   }, [query, selected]);
 
+  // API 검색 — 모든 쿼리에 대해 실행 (한글 포함)
   useEffect(() => {
     if (selected) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const q = query.trim();
     if (q.length < 2) { setApiResults([]); setApiSearching(false); return; }
 
-    const hasEng = /[a-zA-Z]/.test(q);
     const isCode = isKoreanCode(q);
-    if (!hasEng && !isCode && localResults.length > 0) { setApiResults([]); return; }
+    const hasEng = /[a-zA-Z]/.test(q);
 
-    debounceRef.current = setTimeout(async () => {
-      setApiSearching(true);
-      try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
-        if (res.ok) {
-          const data = await res.json();
-          const localCodes = new Set(localResults.map((r) => r.code));
-          setApiResults((data.results || []).filter((r: ApiSearchResult) => !localCodes.has(r.code)));
-        }
-      } catch {}
-      setApiSearching(false);
-    }, 500);
+    // 영문이거나 6자리 코드일 때 API 검색
+    if (hasEng || isCode) {
+      debounceRef.current = setTimeout(async () => {
+        setApiSearching(true);
+        try {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+          if (res.ok) {
+            const data = await res.json();
+            const localCodes = new Set(localResults.map((r) => r.code));
+            setApiResults((data.results || []).filter((r: ApiSearchResult) => !localCodes.has(r.code)));
+          }
+        } catch {}
+        setApiSearching(false);
+      }, 400);
+    } else {
+      setApiResults([]);
+    }
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query, selected, localResults]);
 
@@ -63,22 +68,50 @@ export default function StockSearch() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const handleSelect = (s: StockInfo) => {
+  const handleSelect = useCallback((s: StockInfo) => {
     setSelected(s);
     setQuery(s.name);
     setFocused(false);
     setApiResults([]);
-  };
+  }, []);
 
   const handleClear = () => {
     setQuery(""); setSelected(null); setLocalResults([]); setApiResults([]);
     inputRef.current?.focus();
   };
 
+  // 엔터키로 검색 실행
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+
+    // 1. 로컬 결과 첫 번째 선택
+    if (localResults.length > 0) {
+      handleSelect(localResults[0]);
+      return;
+    }
+    // 2. API 결과 첫 번째 선택
+    if (apiResults.length > 0) {
+      handleSelect({ name: apiResults[0].name, code: apiResults[0].code, market: apiResults[0].market, sector: apiResults[0].type });
+      return;
+    }
+    // 3. 6자리 코드 → KIS 직접 조회
+    if (isKoreanCode(q)) {
+      handleSelect({ name: q, code: q, market: "KR" });
+      return;
+    }
+    // 4. 영문 → US 종목으로 직접 조회
+    if (/^[A-Za-z]{1,5}$/.test(q)) {
+      handleSelect({ name: q.toUpperCase(), code: q.toUpperCase(), market: "US" });
+      return;
+    }
+  };
+
   const hasResults = localResults.length > 0 || apiResults.length > 0;
   const showDirect = isKoreanCode(query.trim()) && localResults.length === 0;
 
-  // 종목 상세 페이지 (전체화면)
   if (selected) {
     return <StockDetailPage stock={selected} onBack={handleClear} />;
   }
@@ -92,8 +125,9 @@ export default function StockSearch() {
           </svg>
           <input ref={inputRef} type="text" value={query}
             onChange={(e) => { setQuery(e.target.value); setSelected(null); }}
+            onKeyDown={handleKeyDown}
             onFocus={() => setFocused(true)}
-            placeholder="종목명, 코드, 티커 검색 (삼성전자, AAPL)"
+            placeholder="종목 검색 후 Enter (삼성전자, AAPL, 005930)"
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted" />
           {apiSearching && <span className="text-[10px] text-muted animate-pulse shrink-0">검색중</span>}
           {query && <button onClick={handleClear} className="text-muted hover:text-black text-sm shrink-0">✕</button>}
@@ -116,7 +150,7 @@ export default function StockSearch() {
 
             {apiResults.length > 0 && (
               <>
-                <div className="px-4 py-1.5 bg-gray-50 text-[10px] text-muted font-bold border-b border-line">API 검색</div>
+                <div className="px-4 py-1.5 bg-gray-50 text-[10px] text-muted font-bold border-b border-line">API 검색 결과</div>
                 {apiResults.map((r, i) => (
                   <button key={`a-${r.code}-${i}`}
                     onClick={() => handleSelect({ name: r.name, code: r.code, market: r.market, sector: r.type })}
@@ -148,7 +182,9 @@ export default function StockSearch() {
               <div className="px-4 py-3 text-center text-sm text-muted animate-pulse">전종목 검색 중...</div>
             )}
             {!apiSearching && !hasResults && !showDirect && query.length >= 2 && (
-              <div className="px-4 py-3 text-center text-xs text-muted">결과 없음 · 6자리 코드로 직접 조회 가능</div>
+              <div className="px-4 py-3 text-center text-xs text-muted">
+                결과 없음 · Enter로 직접 조회 가능
+              </div>
             )}
           </div>
         )}
@@ -156,8 +192,8 @@ export default function StockSearch() {
 
       {focused && !query && (
         <div className="mt-2 text-[11px] text-muted space-y-0.5 px-1">
-          <div>🇰🇷 한국: 종목명 또는 6자리 코드 (삼성전자, 005930)</div>
-          <div>🇺🇸 미국: 종목명 또는 티커 (apple, NVDA, tesla)</div>
+          <div>🇰🇷 한국: 종목명 또는 6자리 코드 → Enter</div>
+          <div>🇺🇸 미국: 종목명 또는 티커 → Enter</div>
           <div>📊 ETF: KODEX, TIGER, SPY, QQQ 등</div>
         </div>
       )}
