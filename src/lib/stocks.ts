@@ -1,3 +1,6 @@
+import krData from "@/data/stocks-kr.json";
+import usData from "@/data/stocks-us.json";
+
 export interface StockInfo {
   name: string;
   code: string;
@@ -5,328 +8,50 @@ export interface StockInfo {
   sector?: string;
 }
 
-export const STOCK_DB: StockInfo[] = [
-  // ═══════════════════════════════════════════════════════
-  // KOSPI 주요 종목
-  // ═══════════════════════════════════════════════════════
-  { name: "삼성전자", code: "005930", market: "KR", sector: "반도체" },
-  { name: "삼성전자우", code: "005935", market: "KR", sector: "반도체" },
-  { name: "SK하이닉스", code: "000660", market: "KR", sector: "반도체" },
-  { name: "LG에너지솔루션", code: "373220", market: "KR", sector: "배터리" },
-  { name: "삼성바이오로직스", code: "207940", market: "KR", sector: "바이오" },
-  { name: "현대차", code: "005380", market: "KR", sector: "자동차" },
-  { name: "현대차2우B", code: "005387", market: "KR", sector: "자동차" },
-  { name: "현대차3우B", code: "005389", market: "KR", sector: "자동차" },
-  { name: "기아", code: "000270", market: "KR", sector: "자동차" },
-  { name: "셀트리온", code: "068270", market: "KR", sector: "바이오" },
-  { name: "KB금융", code: "105560", market: "KR", sector: "금융" },
-  { name: "신한지주", code: "055550", market: "KR", sector: "금융" },
-  { name: "NAVER", code: "035420", market: "KR", sector: "IT" },
-  { name: "카카오", code: "035720", market: "KR", sector: "IT" },
-  { name: "POSCO홀딩스", code: "005490", market: "KR", sector: "철강" },
-  { name: "삼성SDI", code: "006400", market: "KR", sector: "배터리" },
-  { name: "LG화학", code: "051910", market: "KR", sector: "화학" },
-  { name: "현대모비스", code: "012330", market: "KR", sector: "자동차" },
-  { name: "하나금융지주", code: "086790", market: "KR", sector: "금융" },
-  { name: "삼성물산", code: "028260", market: "KR", sector: "건설" },
-  { name: "카카오뱅크", code: "323410", market: "KR", sector: "금융" },
-  { name: "삼성생명", code: "032830", market: "KR", sector: "보험" },
-  { name: "LG전자", code: "066570", market: "KR", sector: "전자" },
-  { name: "SK이노베이션", code: "096770", market: "KR", sector: "에너지" },
-  { name: "SK텔레콤", code: "017670", market: "KR", sector: "통신" },
-  { name: "KT", code: "030200", market: "KR", sector: "통신" },
-  { name: "KT&G", code: "033780", market: "KR", sector: "소비재" },
-  { name: "LG", code: "003550", market: "KR", sector: "지주" },
-  { name: "한국전력", code: "015760", market: "KR", sector: "전력" },
-  { name: "HD현대중공업", code: "329180", market: "KR", sector: "조선" },
-  { name: "HD한국조선해양", code: "009540", market: "KR", sector: "조선" },
-  { name: "한화에어로스페이스", code: "012450", market: "KR", sector: "방산" },
-  { name: "한화오션", code: "042660", market: "KR", sector: "조선" },
-  { name: "한화시스템", code: "272210", market: "KR", sector: "방산" },
-  { name: "한화솔루션", code: "009830", market: "KR", sector: "에너지" },
-  { name: "한화", code: "000880", market: "KR", sector: "지주" },
-  { name: "두산에너빌리티", code: "034020", market: "KR", sector: "에너지" },
-  { name: "크래프톤", code: "259960", market: "KR", sector: "게임" },
-  { name: "엔씨소프트", code: "036570", market: "KR", sector: "게임" },
-  { name: "넷마블", code: "251270", market: "KR", sector: "게임" },
-  { name: "카카오게임즈", code: "293490", market: "KR", sector: "게임" },
-  { name: "하이브", code: "352820", market: "KR", sector: "엔터" },
-  { name: "JYP Ent.", code: "035900", market: "KR", sector: "엔터" },
-  { name: "SM", code: "041510", market: "KR", sector: "엔터" },
-  { name: "CJ ENM", code: "035760", market: "KR", sector: "엔터" },
-  { name: "SK스퀘어", code: "402340", market: "KR", sector: "IT" },
-  { name: "SK", code: "034730", market: "KR", sector: "지주" },
-  { name: "한미반도체", code: "042700", market: "KR", sector: "반도체" },
-  { name: "리노공업", code: "058470", market: "KR", sector: "반도체" },
-  { name: "에코프로비엠", code: "247540", market: "KR", sector: "배터리" },
-  { name: "에코프로", code: "086520", market: "KR", sector: "배터리" },
-  { name: "포스코퓨처엠", code: "003670", market: "KR", sector: "배터리" },
-  { name: "두산로보틱스", code: "454910", market: "KR", sector: "로봇" },
-  { name: "레인보우로보틱스", code: "277810", market: "KR", sector: "로봇" },
-  { name: "인텔리안테크", code: "189300", market: "KR", sector: "우주" },
-  { name: "쎄트렉아이", code: "099320", market: "KR", sector: "우주" },
-  { name: "LIG넥스원", code: "079550", market: "KR", sector: "방산" },
-  { name: "현대로템", code: "064350", market: "KR", sector: "방산" },
-  { name: "HD현대일렉트릭", code: "267260", market: "KR", sector: "전력" },
-  { name: "LS ELECTRIC", code: "010120", market: "KR", sector: "전력" },
-  { name: "일진전기", code: "103590", market: "KR", sector: "전력" },
-  { name: "대한전선", code: "001440", market: "KR", sector: "전력" },
-  { name: "LS", code: "006260", market: "KR", sector: "전력" },
-  { name: "삼성전기", code: "009150", market: "KR", sector: "전자" },
-  { name: "SK바이오팜", code: "326030", market: "KR", sector: "바이오" },
-  { name: "알테오젠", code: "196170", market: "KR", sector: "바이오" },
-  { name: "HLB", code: "028300", market: "KR", sector: "바이오" },
-  { name: "유한양행", code: "000100", market: "KR", sector: "바이오" },
-  { name: "삼성중공업", code: "010140", market: "KR", sector: "조선" },
-  { name: "삼성SDS", code: "018260", market: "KR", sector: "IT" },
-  { name: "삼성화재", code: "000810", market: "KR", sector: "보험" },
-  { name: "삼성카드", code: "029780", market: "KR", sector: "금융" },
-  { name: "삼성에스디에스", code: "018260", market: "KR", sector: "IT" },
-  { name: "현대건설", code: "000720", market: "KR", sector: "건설" },
-  { name: "현대제철", code: "004020", market: "KR", sector: "철강" },
-  { name: "현대글로비스", code: "086280", market: "KR", sector: "물류" },
-  { name: "현대미포조선", code: "010620", market: "KR", sector: "조선" },
-  { name: "현대오토에버", code: "307950", market: "KR", sector: "IT" },
-  { name: "LG이노텍", code: "011070", market: "KR", sector: "전자" },
-  { name: "LG디스플레이", code: "034220", market: "KR", sector: "디스플레이" },
-  { name: "LG생활건강", code: "051900", market: "KR", sector: "소비재" },
-  { name: "LG유플러스", code: "032640", market: "KR", sector: "통신" },
-  { name: "아모레퍼시픽", code: "090430", market: "KR", sector: "소비재" },
-  { name: "S-Oil", code: "010950", market: "KR", sector: "에너지" },
-  { name: "GS건설", code: "006360", market: "KR", sector: "건설" },
-  { name: "GS", code: "078930", market: "KR", sector: "지주" },
-  { name: "대한항공", code: "003490", market: "KR", sector: "항공" },
-  { name: "한진칼", code: "180640", market: "KR", sector: "항공" },
-  { name: "CJ제일제당", code: "097950", market: "KR", sector: "식품" },
-  { name: "CJ", code: "001040", market: "KR", sector: "지주" },
-  { name: "CJ대한통운", code: "000120", market: "KR", sector: "물류" },
-  { name: "오리온", code: "271560", market: "KR", sector: "식품" },
-  { name: "농심", code: "004370", market: "KR", sector: "식품" },
-  { name: "롯데케미칼", code: "011170", market: "KR", sector: "화학" },
-  { name: "롯데지주", code: "004990", market: "KR", sector: "지주" },
-  { name: "미래에셋증권", code: "006800", market: "KR", sector: "증권" },
-  { name: "NH투자증권", code: "005940", market: "KR", sector: "증권" },
-  { name: "한국금융지주", code: "071050", market: "KR", sector: "금융" },
-  { name: "우리금융지주", code: "316140", market: "KR", sector: "금융" },
-  { name: "기업은행", code: "024110", market: "KR", sector: "금융" },
-  { name: "DGB금융지주", code: "139130", market: "KR", sector: "금융" },
-  { name: "BNK금융지주", code: "138930", market: "KR", sector: "금융" },
-  { name: "한전기술", code: "052690", market: "KR", sector: "전력" },
-  { name: "한국가스공사", code: "036460", market: "KR", sector: "에너지" },
-  { name: "한국항공우주", code: "047810", market: "KR", sector: "방산" },
-  { name: "포스코인터내셔널", code: "047050", market: "KR", sector: "무역" },
-  { name: "포스코DX", code: "022100", market: "KR", sector: "IT" },
-  { name: "SK네트웍스", code: "001740", market: "KR", sector: "무역" },
-  { name: "SK바이오사이언스", code: "302440", market: "KR", sector: "바이오" },
-  { name: "SK케미칼", code: "285130", market: "KR", sector: "화학" },
-  { name: "두산밥캣", code: "241560", market: "KR", sector: "기계" },
-  { name: "두산", code: "000150", market: "KR", sector: "지주" },
-  { name: "고려아연", code: "010130", market: "KR", sector: "비철" },
-  { name: "영풍", code: "000670", market: "KR", sector: "비철" },
-  { name: "한국타이어", code: "161390", market: "KR", sector: "타이어" },
-  { name: "금호타이어", code: "073240", market: "KR", sector: "타이어" },
-  { name: "효성중공업", code: "298040", market: "KR", sector: "전력" },
-  { name: "효성", code: "004800", market: "KR", sector: "섬유" },
-  { name: "한국조선해양", code: "009540", market: "KR", sector: "조선" },
-  { name: "현대위아", code: "011210", market: "KR", sector: "자동차" },
-  { name: "만도", code: "204320", market: "KR", sector: "자동차" },
-  { name: "HL만도", code: "204320", market: "KR", sector: "자동차" },
-  { name: "한온시스템", code: "018880", market: "KR", sector: "자동차" },
-  { name: "DB하이텍", code: "000990", market: "KR", sector: "반도체" },
-  { name: "한화투자증권", code: "003530", market: "KR", sector: "증권" },
-  { name: "키움증권", code: "039490", market: "KR", sector: "증권" },
-  { name: "메리츠금융지주", code: "138040", market: "KR", sector: "금융" },
-  { name: "메리츠증권", code: "008560", market: "KR", sector: "증권" },
-  { name: "삼양식품", code: "003230", market: "KR", sector: "식품" },
-  { name: "풍산", code: "103140", market: "KR", sector: "비철" },
-  { name: "금양", code: "001570", market: "KR", sector: "소재" },
-  { name: "OCI홀딩스", code: "010060", market: "KR", sector: "화학" },
-  { name: "한화생명", code: "088350", market: "KR", sector: "보험" },
+interface KrEntry { n: string; c: string; s: string }
+interface UsEntry { n: string; c: string; s: string }
 
-  // ═══════════════════════════════════════════════════════
-  // KOSDAQ 주요 종목
-  // ═══════════════════════════════════════════════════════
-  { name: "에코프로비엠", code: "247540", market: "KR", sector: "배터리" },
-  { name: "에코프로", code: "086520", market: "KR", sector: "배터리" },
-  { name: "셀트리온헬스케어", code: "091990", market: "KR", sector: "바이오" },
-  { name: "셀트리온제약", code: "068760", market: "KR", sector: "바이오" },
-  { name: "카카오페이", code: "377300", market: "KR", sector: "핀테크" },
-  { name: "카카오뱅크", code: "323410", market: "KR", sector: "금융" },
-  { name: "위메이드", code: "112040", market: "KR", sector: "게임" },
-  { name: "펄어비스", code: "263750", market: "KR", sector: "게임" },
-  { name: "컴투스", code: "078340", market: "KR", sector: "게임" },
-  { name: "고영", code: "098460", market: "KR", sector: "장비" },
-  { name: "실리콘웍스", code: "108320", market: "KR", sector: "반도체" },
-  { name: "이오테크닉스", code: "039030", market: "KR", sector: "장비" },
-  { name: "파크시스템스", code: "140860", market: "KR", sector: "장비" },
-  { name: "주성엔지니어링", code: "036930", market: "KR", sector: "장비" },
-  { name: "HPSP", code: "403870", market: "KR", sector: "장비" },
-  { name: "피에스케이", code: "319660", market: "KR", sector: "장비" },
-  { name: "원익IPS", code: "240810", market: "KR", sector: "장비" },
-  { name: "에스에프에이", code: "056190", market: "KR", sector: "장비" },
-  { name: "클래시스", code: "214150", market: "KR", sector: "의료기기" },
-  { name: "리가켐바이오", code: "141080", market: "KR", sector: "바이오" },
-  { name: "메디톡스", code: "086900", market: "KR", sector: "바이오" },
-  { name: "휴젤", code: "145020", market: "KR", sector: "바이오" },
-  { name: "씨젠", code: "096530", market: "KR", sector: "바이오" },
-  { name: "CJ프레시웨이", code: "051500", market: "KR", sector: "식품" },
-  { name: "포스코DX", code: "022100", market: "KR", sector: "IT" },
-  { name: "JB금융지주", code: "175330", market: "KR", sector: "금융" },
+const KR_STOCKS: StockInfo[] = (krData as KrEntry[]).map((e) => ({
+  name: e.n,
+  code: e.c,
+  market: "KR",
+  sector: e.s,
+}));
 
-  // ═══════════════════════════════════════════════════════
-  // 한국 ETF (TIGER, KODEX, KBSTAR 등)
-  // ═══════════════════════════════════════════════════════
-  { name: "KODEX 200", code: "069500", market: "KR", sector: "ETF" },
-  { name: "KODEX 레버리지", code: "122630", market: "KR", sector: "ETF" },
-  { name: "KODEX 인버스", code: "114800", market: "KR", sector: "ETF" },
-  { name: "KODEX 코스닥150", code: "229200", market: "KR", sector: "ETF" },
-  { name: "KODEX 코스닥150레버리지", code: "233740", market: "KR", sector: "ETF" },
-  { name: "KODEX 2차전지산업", code: "305720", market: "KR", sector: "ETF" },
-  { name: "KODEX 반도체", code: "091160", market: "KR", sector: "ETF" },
-  { name: "KODEX 삼성그룹", code: "102780", market: "KR", sector: "ETF" },
-  { name: "KODEX 미국S&P500TR", code: "379800", market: "KR", sector: "ETF" },
-  { name: "KODEX 미국나스닥100TR", code: "379810", market: "KR", sector: "ETF" },
-  { name: "KODEX AI전력핵심설비", code: "487240", market: "KR", sector: "ETF" },
-  { name: "KODEX 미국AI테크TOP10", code: "488770", market: "KR", sector: "ETF" },
-  { name: "KODEX 미국빅테크10(H)", code: "463330", market: "KR", sector: "ETF" },
-  { name: "KODEX 200선물인버스2X", code: "252670", market: "KR", sector: "ETF" },
-  { name: "TIGER 나스닥100", code: "133690", market: "KR", sector: "ETF" },
-  { name: "TIGER S&P500", code: "360750", market: "KR", sector: "ETF" },
-  { name: "TIGER 미국우주테크", code: "396520", market: "KR", sector: "ETF" },
-  { name: "TIGER 차이나전기차SOLACTIVE", code: "371460", market: "KR", sector: "ETF" },
-  { name: "TIGER 200", code: "102110", market: "KR", sector: "ETF" },
-  { name: "TIGER 200IT", code: "139260", market: "KR", sector: "ETF" },
-  { name: "TIGER 반도체", code: "091230", market: "KR", sector: "ETF" },
-  { name: "TIGER 2차전지테마", code: "305540", market: "KR", sector: "ETF" },
-  { name: "TIGER 미국테크TOP10 INDXX", code: "381180", market: "KR", sector: "ETF" },
-  { name: "TIGER 미국필라델피아반도체나스닥", code: "381970", market: "KR", sector: "ETF" },
-  { name: "TIGER Fn반도체TOP10", code: "394670", market: "KR", sector: "ETF" },
-  { name: "TIGER 미국나스닥100TR(H)", code: "448290", market: "KR", sector: "ETF" },
-  { name: "TIGER 미국배당+7%프리미엄다우존스", code: "458730", market: "KR", sector: "ETF" },
-  { name: "TIGER 인도니프티50", code: "453810", market: "KR", sector: "ETF" },
-  { name: "TIGER 일본니케이225", code: "241180", market: "KR", sector: "ETF" },
-  { name: "TIGER 미국AI빅테크10", code: "488760", market: "KR", sector: "ETF" },
-  { name: "KBSTAR 200", code: "148020", market: "KR", sector: "ETF" },
-  { name: "KBSTAR 미국나스닥100", code: "368590", market: "KR", sector: "ETF" },
-  { name: "KBSTAR 미국S&P500", code: "379780", market: "KR", sector: "ETF" },
-  { name: "ACE 미국나스닥100", code: "367380", market: "KR", sector: "ETF" },
-  { name: "ACE 미국S&P500", code: "360200", market: "KR", sector: "ETF" },
-  { name: "ACE 미국빅테크TOP7Plus", code: "465580", market: "KR", sector: "ETF" },
-  { name: "SOL 미국나스닥100", code: "433330", market: "KR", sector: "ETF" },
-  { name: "SOL 미국S&P500", code: "433250", market: "KR", sector: "ETF" },
-  { name: "HANARO 글로벌반도체TOP10", code: "473460", market: "KR", sector: "ETF" },
+const US_STOCKS: StockInfo[] = (usData as UsEntry[]).map((e) => ({
+  name: e.n,
+  code: e.c,
+  market: "US",
+  sector: e.s,
+}));
 
-  // ═══════════════════════════════════════════════════════
-  // 미국 주요 종목
-  // ═══════════════════════════════════════════════════════
-  { name: "애플", code: "AAPL", market: "US", sector: "IT" },
-  { name: "마이크로소프트", code: "MSFT", market: "US", sector: "IT" },
-  { name: "엔비디아", code: "NVDA", market: "US", sector: "반도체" },
-  { name: "아마존", code: "AMZN", market: "US", sector: "커머스" },
-  { name: "알파벳(구글) A", code: "GOOGL", market: "US", sector: "IT" },
-  { name: "알파벳(구글) C", code: "GOOG", market: "US", sector: "IT" },
-  { name: "메타(페이스북)", code: "META", market: "US", sector: "IT" },
-  { name: "테슬라", code: "TSLA", market: "US", sector: "자동차" },
-  { name: "브로드컴", code: "AVGO", market: "US", sector: "반도체" },
-  { name: "TSMC", code: "TSM", market: "US", sector: "반도체" },
-  { name: "일라이릴리", code: "LLY", market: "US", sector: "바이오" },
-  { name: "버크셔해서웨이", code: "BRK.B", market: "US", sector: "금융" },
-  { name: "JP모건", code: "JPM", market: "US", sector: "금융" },
-  { name: "비자", code: "V", market: "US", sector: "금융" },
-  { name: "마스터카드", code: "MA", market: "US", sector: "금융" },
-  { name: "유나이티드헬스", code: "UNH", market: "US", sector: "헬스케어" },
-  { name: "존슨앤존슨", code: "JNJ", market: "US", sector: "헬스케어" },
-  { name: "코스트코", code: "COST", market: "US", sector: "유통" },
-  { name: "월마트", code: "WMT", market: "US", sector: "유통" },
-  { name: "프록터앤갬블", code: "PG", market: "US", sector: "소비재" },
-  { name: "AMD", code: "AMD", market: "US", sector: "반도체" },
-  { name: "인텔", code: "INTC", market: "US", sector: "반도체" },
-  { name: "퀄컴", code: "QCOM", market: "US", sector: "반도체" },
-  { name: "마이크론", code: "MU", market: "US", sector: "반도체" },
-  { name: "ARM홀딩스", code: "ARM", market: "US", sector: "반도체" },
-  { name: "넷플릭스", code: "NFLX", market: "US", sector: "미디어" },
-  { name: "디즈니", code: "DIS", market: "US", sector: "미디어" },
-  { name: "나이키", code: "NKE", market: "US", sector: "소비재" },
-  { name: "보잉", code: "BA", market: "US", sector: "항공" },
-  { name: "록히드마틴", code: "LMT", market: "US", sector: "방산" },
-  { name: "로켓랩", code: "RKLB", market: "US", sector: "우주" },
-  { name: "팔란티어", code: "PLTR", market: "US", sector: "AI" },
-  { name: "스노우플레이크", code: "SNOW", market: "US", sector: "클라우드" },
-  { name: "크라우드스트라이크", code: "CRWD", market: "US", sector: "보안" },
-  { name: "코인베이스", code: "COIN", market: "US", sector: "크립토" },
-  { name: "리비안", code: "RIVN", market: "US", sector: "자동차" },
-  { name: "소파이", code: "SOFI", market: "US", sector: "핀테크" },
-  { name: "슈퍼마이크로", code: "SMCI", market: "US", sector: "서버" },
-  { name: "우버", code: "UBER", market: "US", sector: "모빌리티" },
-  { name: "에어비앤비", code: "ABNB", market: "US", sector: "여행" },
-  { name: "블록(스퀘어)", code: "XYZ", market: "US", sector: "핀테크" },
-  { name: "쇼피파이", code: "SHOP", market: "US", sector: "커머스" },
-  { name: "스포티파이", code: "SPOT", market: "US", sector: "미디어" },
-  { name: "로블록스", code: "RBLX", market: "US", sector: "게임" },
-  { name: "도어대시", code: "DASH", market: "US", sector: "배달" },
-  { name: "세일즈포스", code: "CRM", market: "US", sector: "클라우드" },
-  { name: "어도비", code: "ADBE", market: "US", sector: "소프트웨어" },
-  { name: "서비스나우", code: "NOW", market: "US", sector: "클라우드" },
-  { name: "인튜이트", code: "INTU", market: "US", sector: "소프트웨어" },
-  { name: "어플라이드머티어리얼즈", code: "AMAT", market: "US", sector: "반도체장비" },
-  { name: "램리서치", code: "LRCX", market: "US", sector: "반도체장비" },
-  { name: "KLA", code: "KLAC", market: "US", sector: "반도체장비" },
-  { name: "ASML", code: "ASML", market: "US", sector: "반도체장비" },
-  { name: "텍사스인스트루먼트", code: "TXN", market: "US", sector: "반도체" },
-  { name: "애보트", code: "ABT", market: "US", sector: "헬스케어" },
-  { name: "화이자", code: "PFE", market: "US", sector: "바이오" },
-  { name: "머크", code: "MRK", market: "US", sector: "바이오" },
-  { name: "노보노디스크", code: "NVO", market: "US", sector: "바이오" },
-  { name: "골드만삭스", code: "GS", market: "US", sector: "금융" },
-  { name: "모건스탠리", code: "MS", market: "US", sector: "금융" },
-  { name: "뱅크오브아메리카", code: "BAC", market: "US", sector: "금융" },
-  { name: "씨티그룹", code: "C", market: "US", sector: "금융" },
-  { name: "엑슨모빌", code: "XOM", market: "US", sector: "에너지" },
-  { name: "셰브론", code: "CVX", market: "US", sector: "에너지" },
-  { name: "코카콜라", code: "KO", market: "US", sector: "소비재" },
-  { name: "펩시코", code: "PEP", market: "US", sector: "소비재" },
-  { name: "맥도날드", code: "MCD", market: "US", sector: "외식" },
-  { name: "스타벅스", code: "SBUX", market: "US", sector: "외식" },
+const ALL_STOCKS = [...KR_STOCKS, ...US_STOCKS];
 
-  // 미국 ETF
-  { name: "SPY (S&P500)", code: "SPY", market: "US", sector: "ETF" },
-  { name: "QQQ (나스닥100)", code: "QQQ", market: "US", sector: "ETF" },
-  { name: "DIA (다우존스)", code: "DIA", market: "US", sector: "ETF" },
-  { name: "IWM (러셀2000)", code: "IWM", market: "US", sector: "ETF" },
-  { name: "ARKK (ARK혁신)", code: "ARKK", market: "US", sector: "ETF" },
-  { name: "SOXX (반도체)", code: "SOXX", market: "US", sector: "ETF" },
-  { name: "XLK (기술)", code: "XLK", market: "US", sector: "ETF" },
-  { name: "VOO (S&P500)", code: "VOO", market: "US", sector: "ETF" },
-  { name: "VTI (전체시장)", code: "VTI", market: "US", sector: "ETF" },
-  { name: "TQQQ (나스닥3배)", code: "TQQQ", market: "US", sector: "ETF" },
-  { name: "SQQQ (나스닥인버스3배)", code: "SQQQ", market: "US", sector: "ETF" },
-  { name: "SOXL (반도체3배)", code: "SOXL", market: "US", sector: "ETF" },
-  { name: "SCHD (배당)", code: "SCHD", market: "US", sector: "ETF" },
-  { name: "JEPI (프리미엄인컴)", code: "JEPI", market: "US", sector: "ETF" },
-  { name: "GLD (금)", code: "GLD", market: "US", sector: "ETF" },
-  { name: "TLT (장기채)", code: "TLT", market: "US", sector: "ETF" },
-];
-
-// 중복 제거
-const seen = new Set<string>();
-export const UNIQUE_STOCK_DB = STOCK_DB.filter((s) => {
-  const key = `${s.market}-${s.code}`;
-  if (seen.has(key)) return false;
-  seen.add(key);
-  return true;
-});
+// 코드 → 종목 빠른 조회용 맵
+const CODE_MAP = new Map<string, StockInfo>();
+ALL_STOCKS.forEach((s) => CODE_MAP.set(s.code, s));
 
 export function searchStocks(query: string): StockInfo[] {
   if (!query || query.trim().length < 1) return [];
   const q = query.trim().toLowerCase();
 
-  return UNIQUE_STOCK_DB.filter((s) =>
+  // 정확한 코드 매칭 우선
+  const exact = CODE_MAP.get(q.toUpperCase()) || CODE_MAP.get(q);
+  if (exact) return [exact];
+
+  return ALL_STOCKS.filter((s) =>
     s.name.toLowerCase().includes(q) ||
     s.code.toLowerCase().includes(q) ||
     (s.sector && s.sector.toLowerCase().includes(q))
-  ).slice(0, 12);
+  ).slice(0, 20);
 }
 
 export function isKoreanCode(query: string): boolean {
   return /^\d{6}$/.test(query.trim());
 }
+
+export function getStockByCode(code: string): StockInfo | undefined {
+  return CODE_MAP.get(code);
+}
+
+export const TOTAL_STOCK_COUNT = ALL_STOCKS.length;
