@@ -60,11 +60,12 @@ export default function PortfolioDonut() {
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>(PORTFOLIO);
   const [selectedSector, setSelectedSector] = useState<string | null>(null);
   const [isLive, setIsLive] = useState(false);
+  const [priceLoading, setPriceLoading] = useState(true);
 
   const fetchLivePrices = useCallback(async () => {
     try {
-      const krCodes = [...new Set(portfolio.filter((p) => !p.isUsd && !["TIME", "TDF"].includes(p.code)).map((p) => p.code))];
-      const usCodes = [...new Set(portfolio.filter((p) => p.isUsd).map((p) => p.code))];
+      const krCodes = [...new Set(PORTFOLIO.filter((p) => !p.isUsd && !["TIME", "TDF"].includes(p.code)).map((p) => p.code))];
+      const usCodes = [...new Set(PORTFOLIO.filter((p) => p.isUsd).map((p) => p.code))];
 
       const [kisRes, finnhubRes] = await Promise.all([
         krCodes.length > 0 ? fetch(`/api/kis?type=multi-price&symbols=${krCodes.join(",")}`) : null,
@@ -74,27 +75,30 @@ export default function PortfolioDonut() {
       const kisData = kisRes?.ok ? await kisRes.json() : {};
       const finnhubData = finnhubRes?.ok ? await finnhubRes.json() : {};
 
+      let updated = false;
       setPortfolio((prev) =>
         prev.map((item) => {
           if (!item.isUsd && kisData[item.code]?.price > 0) {
+            updated = true;
             return { ...item, currentPrice: kisData[item.code].price };
           }
           if (item.isUsd && finnhubData[item.code]?.c > 0) {
+            updated = true;
             return { ...item, currentPrice: finnhubData[item.code].c };
           }
           return item;
         })
       );
-      setIsLive(true);
+      if (updated) setIsLive(true);
     } catch {}
-  }, [portfolio]);
+    setPriceLoading(false);
+  }, []);
 
   useEffect(() => {
     fetchLivePrices();
     const interval = setInterval(fetchLivePrices, 60000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchLivePrices]);
 
   const sectors = buildSectors(portfolio);
   const accounts = buildAccountSummary(portfolio);
@@ -114,10 +118,16 @@ export default function PortfolioDonut() {
     <section className="px-4 py-4 pb-24">
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-base font-bold">💼 내 포트폴리오</h2>
-        {isLive && (
+        {priceLoading && (
+          <span className="text-[9px] text-muted animate-pulse">시세 갱신 중...</span>
+        )}
+        {isLive && !priceLoading && (
           <span className="text-[9px] font-bold bg-green-500 text-white px-1.5 py-0.5 rounded animate-pulse">
             LIVE
           </span>
+        )}
+        {!isLive && !priceLoading && (
+          <span className="text-[9px] text-muted">초기 데이터</span>
         )}
       </div>
 
