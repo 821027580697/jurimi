@@ -22,14 +22,21 @@ export function formatUSD(value: number): string {
 }
 
 export function formatPrice(value: number, isUsd: boolean, currency: Currency): string {
-  if (isUsd && currency === 'USD') {
-    return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (currency === 'USD' && !isUsd) {
+    return `$${(value / EXCHANGE_RATE).toFixed(2)}`;
   }
-  if (isUsd && currency === 'KRW') {
+  if (currency === 'KRW' && isUsd) {
     return `${Math.round(value * EXCHANGE_RATE).toLocaleString('ko-KR')}원`;
   }
-  if (!isUsd && currency === 'USD') {
-    return `$${(value / EXCHANGE_RATE).toFixed(2)}`;
+  if (isUsd) {
+    return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  return `${value.toLocaleString('ko-KR')}원`;
+}
+
+export function formatNativePrice(value: number, isUsd: boolean): string {
+  if (isUsd) {
+    return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
   return `${value.toLocaleString('ko-KR')}원`;
 }

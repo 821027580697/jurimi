@@ -216,6 +216,25 @@ export async function fetchSmartCandles(
 
 // ─── News ──────────────────────────────────────────────────────────────────
 
+export interface NaverNewsItem {
+  title: string;
+  link: string;
+  description: string;
+  pubDate: string;
+}
+
+export async function fetchNaverNews(query: string, display = 20): Promise<NaverNewsItem[]> {
+  const data = await fetchWithCache<{ items: NaverNewsItem[] }>(
+    `/api/naver?q=${encodeURIComponent(query)}&display=${display}&sort=date`,
+    120_000
+  );
+  return data?.items || [];
+}
+
+export async function fetchNaverStockNews(stockName: string): Promise<NaverNewsItem[]> {
+  return fetchNaverNews(`${stockName} 주식`, 10);
+}
+
 export async function fetchGeneralNews(): Promise<FinnhubNewsItem[]> {
   const data = await fetchWithCache<FinnhubNewsItem[]>(
     '/api/finnhub?type=news&category=general',

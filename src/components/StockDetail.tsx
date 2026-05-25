@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Stock, Currency } from '@/lib/types';
-import { formatPrice, formatChange, getCheckScore } from '@/lib/utils';
-import { fetchSmartQuote, fetchCompanyNews, fetchSmartMetrics, MetricsData, toFinnhubSymbol, CandleData, FinnhubNewsItem } from '@/lib/api';
+import { formatNativePrice, formatChange, getCheckScore } from '@/lib/utils';
+import { fetchSmartQuote, fetchCompanyNews, fetchSmartMetrics, fetchNaverStockNews, MetricsData, toFinnhubSymbol, CandleData, FinnhubNewsItem, NaverNewsItem, isKoreanStock } from '@/lib/api';
 import { calcRSI, calcMACD, calcMFI, calcBollingerB, calcStochastic, calcWilliamsR, calcATR, calcADX, calcCCI } from '@/lib/indicators';
 import Chart from './Chart';
 
@@ -42,11 +42,12 @@ function metricColor(val: number | undefined | null): string {
   return '#000';
 }
 
-export default function StockDetail({ stock, currency, onBack, isBookmarked, onToggleBookmark }: StockDetailProps) {
+export default function StockDetail({ stock, onBack, isBookmarked, onToggleBookmark }: StockDetailProps) {
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const [liveChg, setLiveChg] = useState<number | null>(null);
   const [indicators, setIndicators] = useState<Indicators>({ rsi: null, macd: null, mfi: null, bb: null, stoch: null, williamsR: null, atr: null, adx: null, cci: null, live: false });
   const [companyNews, setCompanyNews] = useState<FinnhubNewsItem[]>([]);
+  const [naverNews, setNaverNews] = useState<NaverNewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
   const [metrics, setMetrics] = useState<MetricsData['metric'] | null>(null);
   const [metricsLoading, setMetricsLoading] = useState(true);
@@ -77,12 +78,19 @@ export default function StockDetail({ stock, currency, onBack, isBookmarked, onT
 
   useEffect(() => {
     setNewsLoading(true);
-    const sym = toFinnhubSymbol(stock.code, !!stock.usd);
-    fetchCompanyNews(sym).then(news => {
-      setCompanyNews(news.slice(0, 5));
-      setNewsLoading(false);
-    });
-  }, [stock.code, stock.usd]);
+    if (!stock.usd && isKoreanStock(stock.code)) {
+      fetchNaverStockNews(stock.name).then(news => {
+        setNaverNews(news);
+        setNewsLoading(false);
+      });
+    } else {
+      const sym = toFinnhubSymbol(stock.code, !!stock.usd);
+      fetchCompanyNews(sym).then(news => {
+        setCompanyNews(news.slice(0, 5));
+        setNewsLoading(false);
+      });
+    }
+  }, [stock.code, stock.usd, stock.name]);
 
   const handleCandlesLoaded = useCallback((data: CandleData) => {
     const rsi = calcRSI(data.c);
@@ -159,10 +167,6 @@ export default function StockDetail({ stock, currency, onBack, isBookmarked, onT
     },
   ];
 
-  const displayNews = companyNews.length > 0
-    ? companyNews
-    : stock.news.map((n, i) => ({ id: i, headline: n, source: '', datetime: 0, url: '', category: '', image: '', related: '', summary: '' }));
-
   return (
     <div className="pb-20">
       <div className="flex items-center justify-between px-4 py-3">
@@ -188,7 +192,7 @@ export default function StockDetail({ stock, currency, onBack, isBookmarked, onT
           </div>
           <div className="text-right">
             <div className="text-[28px] font-mono font-black">
-              {formatPrice(price, !!stock.usd, currency)}
+              {formatNativePrice(price, !!stock.usd)}
             </div>
             <div className="font-mono font-bold text-base" style={{ color: change.color }}>
               {change.text}
@@ -344,30 +348,43 @@ export default function StockDetail({ stock, currency, onBack, isBookmarked, onT
       <div className="px-4 mb-4">
         <div className="flex items-center gap-2 mb-2">
           <h3 className="text-sm font-bold">관련 뉴스</h3>
-          {companyNews.length > 0 && <span className="text-[9px] bg-green-500 text-white px-1 py-0.5 rounded">실시간</span>}
+          {(naverNews.length > 0 || companyNews.length > 0) && (
+            <span className="text-[9px] bg-green-500 text-white px-1 py-0.5 rounded animate-pulse">LIVE</span>
+          )}
+          {naverNews.length > 0 && <span className="text-[9px] text-gray-400">네이버</span>}
           {newsLoading && <span className="text-[9px] text-gray-400 animate-pulse">로딩...</span>}
         </div>
         <div className="space-y-2">
-          {displayNews.slice(0, 5).map((n, i) => (
-            <a key={n.id || i} href={(n as FinnhubNewsItem).url || undefined}
-              target="_blank" rel="noopener noreferrer"
-              className="block bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
-              <div className="text-xs font-medium leading-relaxed">
-                {(n as FinnhubNewsItem).headline || (n as unknown as string)}
+          {naverNews.length > 0 ? (
+            naverNews.slice(0, 5).map((n, i) => (
+              <a key={i} href={n.link} target="_blank" rel="noopener noreferrer"
+                className="block bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                <div className="text-xs font-medium leading-relaxed">{n.title}</div>
+                <div className="text-[10px] text-gray-400 mt-1 line-clamp-1">{n.description}</div>
+              </a>
+            ))
+          ) : companyNews.length > 0 ? (
+            companyNews.slice(0, 5).map((n, i) => (
+              <a key={n.id || i} href={n.url || undefined} target="_blank" rel="noopener noreferrer"
+                className="block bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                <div className="text-xs font-medium leading-relaxed">{n.headline}</div>
+                {n.source && (
+                  <div className="flex items-center gap-2 mt-1 text-[10px] text-gray-400">
+                    <span>{n.source}</span>
+                    {n.datetime > 0 && <span>{new Date(n.datetime * 1000).toLocaleDateString('ko-KR')}</span>}
+                  </div>
+                )}
+              </a>
+            ))
+          ) : stock.news.length > 0 ? (
+            stock.news.slice(0, 3).map((n, i) => (
+              <div key={i} className="bg-gray-50 rounded-lg p-3">
+                <div className="text-xs">{n}</div>
               </div>
-              {(n as FinnhubNewsItem).source && (
-                <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-400">
-                  <span>{(n as FinnhubNewsItem).source}</span>
-                  {(n as FinnhubNewsItem).datetime > 0 && (
-                    <span>{new Date((n as FinnhubNewsItem).datetime * 1000).toLocaleDateString('ko-KR')}</span>
-                  )}
-                </div>
-              )}
-            </a>
-          ))}
-          {!newsLoading && displayNews.length === 0 && (
+            ))
+          ) : !newsLoading ? (
             <div className="text-xs text-gray-400 text-center py-4">관련 뉴스가 없습니다</div>
-          )}
+          ) : null}
         </div>
       </div>
 
