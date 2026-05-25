@@ -77,17 +77,23 @@ export default function NewsSlider({ news, isLive }: Props) {
           }),
         });
 
-        if (!res.ok) throw new Error("AI 요약 생성 실패");
         const data = await res.json();
+        if (!res.ok || data.error) {
+          throw new Error(data.error || `AI 요약 실패 (${res.status})`);
+        }
 
         setSummaries((prev) => ({
           ...prev,
           [id]: { summary: data.summary, loading: false, error: null },
         }));
       } catch (e) {
+        const msg = e instanceof Error ? e.message : "오류";
+        const userMsg = msg.includes("미설정")
+          ? "⚠️ Vercel 환경변수에 ANTHROPIC_API_KEY를 추가해주세요"
+          : msg;
         setSummaries((prev) => ({
           ...prev,
-          [id]: { summary: "", loading: false, error: e instanceof Error ? e.message : "오류" },
+          [id]: { summary: "", loading: false, error: userMsg },
         }));
       }
     }
