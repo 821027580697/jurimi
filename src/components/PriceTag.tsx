@@ -1,34 +1,24 @@
-'use client';
+"use client";
 
 interface PriceTagProps {
-  chg: number;
-  size?: 'sm' | 'md' | 'lg';
+  change: number;
+  size?: "sm" | "md" | "lg";
+  showArrow?: boolean;
 }
 
-export default function PriceTag({ chg, size = 'md' }: PriceTagProps) {
-  const sizeClass = {
-    sm: 'text-xs',
-    md: 'text-sm',
-    lg: 'text-base',
-  }[size];
-
-  let text: string;
-  let color: string;
-
-  if (chg > 0) {
-    text = `▲ +${chg.toFixed(2)}%`;
-    color = '#FF2D2D';
-  } else if (chg < 0) {
-    text = `▼ ${chg.toFixed(2)}%`;
-    color = '#2D6CFF';
-  } else {
-    text = `— 0.00%`;
-    color = '#999999';
-  }
+export default function PriceTag({ change, size = "md", showArrow = true }: PriceTagProps) {
+  const isUp = change > 0;
+  const isDown = change < 0;
+  const color = isUp ? "#FF2D2D" : isDown ? "#2D6CFF" : "#999999";
+  const arrow = isUp ? "▲" : isDown ? "▼" : "—";
+  const sign = isUp ? "+" : "";
+  const fontSize = size === "lg" ? "text-[15px]" : size === "sm" ? "text-[11px]" : "text-[13px]";
 
   return (
-    <span className={`font-mono font-bold ${sizeClass}`} style={{ color }}>
-      {text}
+    <span className={`font-mono font-bold ${fontSize}`} style={{ color }}>
+      {showArrow && `${arrow} `}
+      {sign}
+      {change.toFixed(2)}%
     </span>
   );
 }

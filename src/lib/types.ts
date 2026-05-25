@@ -1,70 +1,86 @@
-export interface Stock {
-  name: string;
-  code: string;
-  sector: string;
-  price: number;
-  chg: number;
-  per: string;
-  roe: string;
-  rev: string;
-  cap: string;
-  check: string;
-  analyst: string;
-  tp: string;
-  op: string;
-  desc: string;
-  news: string[];
-  usd?: boolean;
-  aiScore?: number;
-}
-
-export interface Holding {
-  name: string;
-  code: string;
-  qty: number;
-  avg: number;
-  cur: number;
-  sector?: string;
-  check?: string;
-  usd?: boolean;
-  type?: string;
-}
-
 export interface MarketIndex {
+  region: string;
   name: string;
-  flag: string;
+  symbol: string;
   value: number;
-  chg: number;
+  change: number;
+  prevClose: number;
+}
+
+export interface CurrencyRate {
+  pair: string;
+  value: number;
+  change: number;
+}
+
+export interface Commodity {
+  name: string;
+  icon: string;
+  symbol: string;
+  value: number;
+  change: number;
+  unit?: string;
+}
+
+export interface MarketData {
+  korea: MarketIndex[];
+  us: MarketIndex[];
+  japan: MarketIndex[];
+  china: MarketIndex[];
+  europe: MarketIndex[];
+  currencies: CurrencyRate[];
+  commodities: Commodity[];
 }
 
 export interface NewsItem {
-  type: 'surge' | 'good' | 'ipo' | 'flow' | 'macro';
+  id: number;
+  type: string;
+  typeColor: string;
+  typeEmoji: string;
   title: string;
+  summary: string;
   time: string;
-  tags: string[];
+  source: string;
+  link?: string;
+}
+
+export interface SectorCycleItem {
+  name: string;
+  emoji: string;
+  status: "active" | "upcoming" | "future";
+  period: string;
+  portfolioPct: number;
+  ytdReturn: number;
+  barColor: string;
 }
 
 export interface EventItem {
-  emoji: string;
+  date: string;
   name: string;
-  dday: number;
+  icon: string;
+  dDay: number;
+  highlight: boolean;
 }
 
-export type Tab = 'home' | 'market' | 'asset' | 'news' | 'ai' | 'bookmark';
-export type Currency = 'KRW' | 'USD';
+export interface PortfolioItem {
+  name: string;
+  code: string;
+  qty: number;
+  avgPrice: number;
+  currentPrice: number;
+  sector: string;
+  sectorEmoji: string;
+  account: "국내" | "해외" | "퇴직연금";
+  checklist: string;
+  isUsd?: boolean;
+}
 
-export const SECTOR_LIST: { emoji: string; name: string }[] = [
-  { emoji: '💾', name: '반도체' },
-  { emoji: '🚀', name: '우주/방산' },
-  { emoji: '🤖', name: '로봇' },
-  { emoji: '👓', name: 'AR/XR' },
-  { emoji: '💊', name: '바이오' },
-  { emoji: '🚗', name: '자동차' },
-  { emoji: '⚡', name: '전력/에너지' },
-  { emoji: '🏦', name: '금융' },
-  { emoji: '📱', name: 'IT/플랫폼' },
-  { emoji: '🔋', name: '2차전지' },
-  { emoji: '🏗️', name: '건설/소재' },
-  { emoji: '🎮', name: '엔터/게임' },
-  { emoji: '🛒', name: '유통/소비재' },
-];
+export interface SectorSummary {
+  name: string;
+  emoji: string;
+  color: string;
+  totalValue: number;
+  totalCost: number;
+  percentage: number;
+  items: PortfolioItem[];
+}
