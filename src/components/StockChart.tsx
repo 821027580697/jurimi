@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   AreaChart,
   Area,
@@ -30,54 +30,58 @@ interface Props {
 
 type Period = "1D" | "1W" | "1M" | "3M" | "1Y";
 
-const PERIOD_CONFIG: Record<Period, { label: string; days: number; resolution: string; period: string }> = {
-  "1D": { label: "1일", days: 1, resolution: "5", period: "D" },
-  "1W": { label: "1주", days: 7, resolution: "D", period: "D" },
-  "1M": { label: "1개월", days: 30, resolution: "D", period: "D" },
-  "3M": { label: "3개월", days: 90, resolution: "D", period: "D" },
-  "1Y": { label: "1년", days: 365, resolution: "D", period: "D" },
-};
+const PERIODS: { key: Period; label: string; days: number; refresh: number }[] = [
+  { key: "1D", label: "1일",   days: 1,   refresh: 30000 },   // 30초마다 갱신
+  { key: "1W", label: "1주",   days: 7,   refresh: 60000 },   // 1분
+  { key: "1M", label: "1개월", days: 30,  refresh: 120000 },  // 2분
+  { key: "3M", label: "3개월", days: 90,  refresh: 300000 },  // 5분
+  { key: "1Y", label: "1년",   days: 365, refresh: 600000 },  // 10분
+];
 
 export default function StockChart({ code, market, name }: Props) {
   const [period, setPeriod] = useState<Period>("3M");
   const [candles, setCandles] = useState<CandleData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchChart = useCallback(async () => {
-    setLoading(true);
+  const fetchChart = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
 
     try {
-      const cfg = PERIOD_CONFIG[period];
+      const cfg = PERIODS.find((p) => p.key === period)!;
       let url: string;
+      const ts = Date.now(); // 캐시 방지
 
       if (market === "KR") {
         if (period === "1D") {
-          url = `/api/kis?type=minute&symbol=${code}`;
+          url = `/api/kis?type=minute&symbol=${code}&_t=${ts}`;
         } else {
-          url = `/api/kis?type=daily&symbol=${code}&period=${cfg.period}&days=${cfg.days}`;
+          url = `/api/kis?type=daily&symbol=${code}&period=D&days=${cfg.days}&_t=${ts}`;
         }
       } else {
         if (period === "1D") {
-          url = `/api/finnhub?type=candle&symbol=${code}&resolution=5&days=1`;
+          url = `/api/finnhub?type=candle&symbol=${code}&resolution=5&days=1&_t=${ts}`;
         } else {
-          url = `/api/finnhub?type=candle&symbol=${code}&resolution=${cfg.resolution}&days=${cfg.days}`;
+          url = `/api/finnhub?type=candle&symbol=${code}&resolution=D&days=${cfg.days}&_t=${ts}`;
         }
       }
 
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) throw new Error("API 오류");
 
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      const c = data.candles || [];
+      const c: CandleData[] = data.candles || [];
       if (c.length === 0) {
         setError("차트 데이터 없음");
         setCandles([]);
       } else {
         setCandles(c);
+        setLastUpdate(new Date());
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "차트 로딩 실패");
@@ -87,9 +91,30 @@ export default function StockChart({ code, market, name }: Props) {
     setLoading(false);
   }, [code, market, period]);
 
+  // 최초 로드 + 주기적 갱신
   useEffect(() => {
-    fetchChart();
-  }, [fetchChart]);
+    fetchChart(true);
+
+    // 이전 인터벌 정리
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    const cfg = PERIODS.find((p) => p.key === period)!;
+    intervalRef.current = setInterval(() => {
+      fetchChart(false); // 갱신 시 로딩 표시 안 함 (깜빡임 방지)
+    }, cfg.refresh);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [fetchChart, period]);
+
+  // 종목 변경 시 초기화
+  useEffect(() => {
+    setCandles([]);
+    setLastUpdate(null);
+    setPeriod("3M");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code]);
 
   const firstClose = candles.length > 0 ? candles[0].close : 0;
   const lastClose = candles.length > 0 ? candles[candles.length - 1].close : 0;
@@ -100,69 +125,93 @@ export default function StockChart({ code, market, name }: Props) {
   const maxPrice = candles.length > 0 ? Math.max(...candles.map((c) => c.high)) : 0;
   const priceMargin = (maxPrice - minPrice) * 0.05 || 1;
 
+  const refreshSec = PERIODS.find((p) => p.key === period)!.refresh / 1000;
+
   const formatPrice = (v: number) => {
     if (market === "KR") return `${Math.round(v).toLocaleString("ko-KR")}`;
     return `$${v.toFixed(2)}`;
   };
 
   const formatXLabel = (date: string) => {
-    if (period === "1D") return date;
-    if (period === "1W" || period === "1M") {
-      const parts = date.split("-");
-      return `${parts[1]}/${parts[2]}`;
-    }
+    if (period === "1D") return date; // "HH:MM" 형식
     const parts = date.split("-");
-    return `${parts[1]}/${parts[2]}`;
+    if (parts.length === 3) return `${parts[1]}/${parts[2]}`;
+    return date;
+  };
+
+  const formatLastUpdate = () => {
+    if (!lastUpdate) return "";
+    const h = lastUpdate.getHours().toString().padStart(2, "0");
+    const m = lastUpdate.getMinutes().toString().padStart(2, "0");
+    const s = lastUpdate.getSeconds().toString().padStart(2, "0");
+    return `${h}:${m}:${s}`;
   };
 
   return (
     <div className="mt-4">
       {/* 기간 선택 */}
       <div className="flex gap-1 mb-3">
-        {(Object.entries(PERIOD_CONFIG) as [Period, typeof PERIOD_CONFIG[Period]][]).map(([key, cfg]) => (
+        {PERIODS.map((p) => (
           <button
-            key={key}
-            onClick={() => setPeriod(key)}
+            key={p.key}
+            onClick={() => setPeriod(p.key)}
             className={`flex-1 text-[11px] font-bold py-1.5 rounded-lg transition-colors ${
-              period === key
+              period === p.key
                 ? "bg-black text-white"
                 : "bg-gray-100 text-sub hover:bg-gray-200"
             }`}
           >
-            {cfg.label}
+            {p.label}
           </button>
         ))}
       </div>
 
       {/* 차트 영역 */}
       <div className="bg-card rounded-xl border border-line p-2">
-        {loading ? (
+        {loading && candles.length === 0 ? (
           <div className="h-[200px] flex items-center justify-center">
             <span className="text-sm text-muted animate-pulse">차트 로딩 중...</span>
           </div>
-        ) : error ? (
-          <div className="h-[200px] flex items-center justify-center">
+        ) : error && candles.length === 0 ? (
+          <div className="h-[200px] flex flex-col items-center justify-center gap-2">
             <span className="text-xs text-muted">{error}</span>
+            <button
+              onClick={() => fetchChart(true)}
+              className="text-[11px] font-bold text-white bg-black px-3 py-1 rounded-lg"
+            >
+              다시 시도
+            </button>
           </div>
         ) : candles.length > 0 ? (
           <>
-            {/* 기간 수익률 */}
-            <div className="flex items-center gap-2 px-2 mb-1">
-              <span className="text-[10px] text-muted">{PERIOD_CONFIG[period].label} 변동</span>
-              <span
-                className="font-mono text-[12px] font-bold"
-                style={{ color: chartColor }}
-              >
-                {isUp ? "+" : ""}
-                {changePct.toFixed(2)}%
-              </span>
+            {/* 기간 수익률 + 갱신 시각 */}
+            <div className="flex items-center justify-between px-2 mb-1">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted">
+                  {PERIODS.find((p) => p.key === period)!.label} 변동
+                </span>
+                <span
+                  className="font-mono text-[12px] font-bold"
+                  style={{ color: chartColor }}
+                >
+                  {isUp ? "+" : ""}{changePct.toFixed(2)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                {loading && (
+                  <span className="w-1 h-1 rounded-full bg-green-500 animate-pulse" />
+                )}
+                <span className="text-[9px] text-muted">
+                  {formatLastUpdate()}
+                </span>
+              </div>
             </div>
 
-            {/* 메인 차트 (종가 라인) */}
+            {/* 메인 차트 */}
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={candles} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id={`grad-${code}`} x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id={`grad-${code}-${period}`} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor={chartColor} stopOpacity={0.2} />
                     <stop offset="100%" stopColor={chartColor} stopOpacity={0.02} />
                   </linearGradient>
@@ -207,29 +256,27 @@ export default function StockChart({ code, market, name }: Props) {
                   dataKey="close"
                   stroke={chartColor}
                   strokeWidth={1.5}
-                  fill={`url(#grad-${code})`}
+                  fill={`url(#grad-${code}-${period})`}
                   dot={false}
                   activeDot={{ r: 3, fill: chartColor }}
+                  isAnimationActive={false}
                 />
               </AreaChart>
             </ResponsiveContainer>
 
-            {/* 거래량 차트 */}
+            {/* 거래량 */}
             <ResponsiveContainer width="100%" height={40}>
               <BarChart data={candles} margin={{ top: 0, right: 5, left: 0, bottom: 0 }}>
                 <XAxis dataKey="date" hide />
                 <YAxis hide />
-                <Bar
-                  dataKey="volume"
-                  fill="#E0E0E0"
-                  radius={[1, 1, 0, 0]}
-                />
+                <Bar dataKey="volume" fill="#E0E0E0" radius={[1, 1, 0, 0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
 
             <div className="flex items-center justify-center gap-1 mt-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
               <span className="text-[9px] text-muted">
-                {market === "KR" ? "한국투자증권 KIS API" : "Finnhub API"} · {name}
+                {market === "KR" ? "KIS API" : "Finnhub API"} · {refreshSec}초 자동갱신
               </span>
             </div>
           </>
