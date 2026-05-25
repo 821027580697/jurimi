@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Stock, Currency } from '@/lib/types';
 import { formatPrice, formatChange, getCheckScore } from '@/lib/utils';
-import { fetchQuote, fetchCompanyNews, fetchMetrics, MetricsData, toFinnhubSymbol, CandleData, FinnhubNewsItem } from '@/lib/api';
+import { fetchSmartQuote, fetchCompanyNews, fetchSmartMetrics, MetricsData, toFinnhubSymbol, CandleData, FinnhubNewsItem } from '@/lib/api';
 import { calcRSI, calcMACD, calcMFI, calcBollingerB, calcStochastic, calcWilliamsR, calcATR, calcADX, calcCCI } from '@/lib/indicators';
 import Chart from './Chart';
 
@@ -59,8 +59,7 @@ export default function StockDetail({ stock, currency, onBack, isBookmarked, onT
   const hasCheck = stock.check !== '-/-';
 
   useEffect(() => {
-    const sym = toFinnhubSymbol(stock.code, !!stock.usd);
-    fetchQuote(sym).then(q => {
+    fetchSmartQuote(stock.code, !!stock.usd).then(q => {
       if (q && q.c > 0) {
         setLivePrice(q.c);
         setLiveChg(q.dp);
@@ -70,8 +69,7 @@ export default function StockDetail({ stock, currency, onBack, isBookmarked, onT
 
   useEffect(() => {
     setMetricsLoading(true);
-    const sym = toFinnhubSymbol(stock.code, !!stock.usd);
-    fetchMetrics(sym).then(data => {
+    fetchSmartMetrics(stock.code, !!stock.usd).then(data => {
       if (data) setMetrics(data.metric);
       setMetricsLoading(false);
     });

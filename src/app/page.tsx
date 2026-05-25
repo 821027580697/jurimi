@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Tab, Currency, Stock } from '@/lib/types';
 import { stocks, portfolio, marketIndices, bondsCommodities } from '@/lib/data';
 import { formatChange, calculatePortfolioValue, calculatePL } from '@/lib/utils';
-import { fetchQuotes, toFinnhubSymbol, QuoteData } from '@/lib/api';
+import { fetchSmartQuotes, fetchQuotes, toFinnhubSymbol, QuoteData } from '@/lib/api';
 import { useBookmarks } from '@/lib/useBookmarks';
 import Header from '@/components/Header';
 import TabBar from '@/components/TabBar';
@@ -38,18 +38,21 @@ export default function Home() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   const fetchLiveData = useCallback(async () => {
-    const holdingSymbols = [
-      ...portfolio.domestic.map(h => toFinnhubSymbol(h.code)),
-      ...portfolio.overseas.map(h => h.code),
-      ...portfolio.pension.filter(h => /^\d{6}$/.test(h.code)).map(h => toFinnhubSymbol(h.code)),
+    const allHoldingDefs = [
+      ...portfolio.domestic.map(h => ({ code: h.code, usd: false })),
+      ...portfolio.overseas.map(h => ({ code: h.code, usd: true })),
+      ...portfolio.pension.filter(h => /^\d{6}$/.test(h.code)).map(h => ({ code: h.code, usd: false })),
     ];
-    const allSymbols = Array.from(new Set([...holdingSymbols, ...Object.keys(MARKET_SYMBOLS)]));
-    const quotes = await fetchQuotes(allSymbols);
-    if (Object.keys(quotes).length > 0) {
-      setLiveQuotes(prev => ({ ...prev, ...quotes }));
+    const stockQuotes = await fetchSmartQuotes(allHoldingDefs);
+    const marketSymbols = Object.keys(MARKET_SYMBOLS);
+    const marketQuotesResult = await fetchQuotes(marketSymbols);
+
+    const allQuotes: Record<string, QuoteData> = { ...stockQuotes, ...marketQuotesResult };
+    if (Object.keys(allQuotes).length > 0) {
+      setLiveQuotes(prev => ({ ...prev, ...allQuotes }));
       const mq: Record<string, QuoteData> = {};
-      for (const sym of Object.keys(MARKET_SYMBOLS)) {
-        if (quotes[sym]) mq[sym] = quotes[sym];
+      for (const sym of marketSymbols) {
+        if (marketQuotesResult[sym]) mq[sym] = marketQuotesResult[sym];
       }
       setMarketQuotes(prev => ({ ...prev, ...mq }));
       setLastUpdate(new Date());
@@ -65,8 +68,7 @@ export default function Home() {
   const getLiveHoldings = useCallback(() => {
     const applyLive = (holdings: typeof portfolio.domestic) =>
       holdings.map(h => {
-        const sym = h.usd ? h.code : toFinnhubSymbol(h.code);
-        const q = liveQuotes[sym] || liveQuotes[h.code];
+        const q = liveQuotes[h.code] || liveQuotes[toFinnhubSymbol(h.code)];
         if (q && q.c > 0) return { ...h, cur: q.c };
         return h;
       });
